@@ -1902,7 +1902,9 @@ int main(int argc, char **argv) {
       self.skipTest('main module support for non-wasm')
     if '-fsanitize=address' in self.emcc_args:
       self.skipTest('no dynamic library support in asan yet')
-    self.emcc_args += args + ['-s', 'EXPORTED_FUNCTIONS=_main,_malloc']
+    self.emcc_args += args
+    if 'MAIN_MODULE' not in args:
+      self.emcc_args += ['-s', 'EXPORTED_FUNCTIONS=_main,_malloc']
 
     self.do_core_test('test_em_js.cpp', force_c=force_c)
     self.assertContained("no args returning int", read_file('test_em_js.js'))
@@ -2720,7 +2722,6 @@ The current type of b is: 9
 
   @needs_dylink
   def test_dlfcn_qsort(self):
-    self.set_setting('EXPORTED_FUNCTIONS', ['_get_cmp'])
     create_file('liblib.cpp', '''
       int lib_cmp(const void* left, const void* right) {
         const int* a = (const int*) left;
@@ -2739,7 +2740,6 @@ The current type of b is: 9
     self.build_dlfcn_lib('liblib.cpp')
 
     self.prep_dlfcn_main()
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc'])
     src = '''
       #include <stdio.h>
       #include <stdlib.h>
@@ -2824,7 +2824,6 @@ The current type of b is: 9
         return lib_fptr;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_func'])
     self.build_dlfcn_lib('liblib.cpp')
 
     self.prep_dlfcn_main()
@@ -2881,7 +2880,6 @@ The current type of b is: 9
         return 0;
       }
       '''
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main'])
     self.do_run(src, '''\
 In func: 13
 First calling main_fptr from lib.
@@ -2902,7 +2900,6 @@ Var: 42
         print_ints(2, 13, 42);
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_func'])
     self.build_dlfcn_lib('liblib.cpp')
 
     self.prep_dlfcn_main()
@@ -2935,7 +2932,6 @@ Var: 42
         return 0;
       }
       '''
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main'])
     self.do_run(src, '100\n200\n13\n42\n')
 
   @needs_dylink
@@ -3038,7 +3034,6 @@ Var: 42
         return 13;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_myfunc'])
     self.build_dlfcn_lib('liblib.c')
 
     self.prep_dlfcn_main()
@@ -3065,7 +3060,6 @@ Var: 42
         return 0;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc'])
     self.do_runf('main.c', 'success')
 
   @needs_dylink
@@ -3077,7 +3071,6 @@ Var: 42
         return 13;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_myfunc'])
     self.build_dlfcn_lib('liblib.c')
 
     self.prep_dlfcn_main()
@@ -3119,7 +3112,6 @@ Var: 42
         return 0;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc'])
     self.do_runf('main.c', 'success')
 
   @needs_dylink
@@ -3139,7 +3131,6 @@ Var: 42
         return strlen(bigstack);
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_myfunc'])
     self.build_dlfcn_lib('liblib.c')
 
     self.prep_dlfcn_main()
@@ -3174,7 +3165,6 @@ Var: 42
         return 0;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc', '_strcmp'])
     self.do_runf('main.c', 'success')
 
   @needs_dylink
@@ -3210,7 +3200,6 @@ Var: 42
         }
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_callvoid', '_callint', '_getvoid', '_getint'])
     self.build_dlfcn_lib('liblib.c')
 
     self.prep_dlfcn_main()
@@ -3261,7 +3250,6 @@ Var: 42
         return 0;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc'])
     self.do_runf('main.c', '''go
 void_main.
 int_main 201
@@ -3286,11 +3274,9 @@ ok
       void *mallocproxy(int n) { return malloc(n); }
       void freeproxy(void *p) { free(p); }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_mallocproxy', '_freeproxy'])
     self.build_dlfcn_lib('liblib.c')
 
     self.prep_dlfcn_main()
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc', '_free'])
     self.do_runf(test_file('dlmalloc_proxy.c'), '*294,153*')
 
   @needs_dylink
@@ -3338,7 +3324,6 @@ ok
         return 0;
       }
       ''')
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc', '_free'])
     self.do_runf('main.c', '''go!
 pre 1
 pre 2
@@ -3410,7 +3395,6 @@ out!
         return 0;
       }
       '''
-    self.set_setting('EXPORTED_FUNCTIONS', ['_main', '_malloc', '_free'])
     self.do_run(src, '''go!
 ok: 65
 int 123
