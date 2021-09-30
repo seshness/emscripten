@@ -85,7 +85,9 @@ def optimize_syscalls(declares, DEBUG):
     # (without open, etc.. nothing substantial can be done, so we can disable
     # extra filesystem support in that case)
     if set(syscalls).issubset(set([
+      # We should probably include a lot more non-filesystem syscalls here.
       '__sys_ioctl',
+      '__sys_getpid',
       'fd_seek',
       'fd_write',
       'fd_close',

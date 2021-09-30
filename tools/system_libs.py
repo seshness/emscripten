@@ -825,6 +825,10 @@ class libc(AsanInstrumentedLibrary, MuslInternalLibrary, MTLibrary):
         filenames=['dlerror.c', 'dlsym.c', 'dlclose.c'])
 
     libc_files += files_in_path(
+        path='system/lib/libc/musl/src/linux',
+        filenames=['gettid.c'])
+
+    libc_files += files_in_path(
         path='system/lib/libc/musl/src/signal',
         filenames=[
           'getitimer.c',

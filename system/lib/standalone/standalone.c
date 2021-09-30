@@ -62,6 +62,10 @@ long __syscall_munmap(int x, int y) {
   return -ENOSYS;
 }
 
+long __syscall_getpid() {
+  return 42;
+}
+
 long __syscall_mmap2(long addr, long len, long prot, long flags, long fd, long off) {
   return -ENOSYS;
 }

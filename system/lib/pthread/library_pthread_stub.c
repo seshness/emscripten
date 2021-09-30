@@ -4,6 +4,7 @@
 #include <semaphore.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "pthread_impl.h"
 #include <emscripten/stack.h>
 #include <emscripten/threading.h>
@@ -394,4 +395,5 @@ pthread_t __pthread_self(void) {
 __attribute__((constructor))
 static void init_pthread_self(void) {
   __pthread_self()->locale = &libc.global_locale;
+  __pthread_self()->tid = getpid();
 }
