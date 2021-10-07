@@ -5,6 +5,7 @@
  */
 
 var LibraryStackTrace = {
+  $demangle__deps: ['$withStackSave'],
   $demangle: function(func) {
 #if DEMANGLE_SUPPORT
     // If demangle has failed before, stop demangling any further function names
@@ -13,26 +14,26 @@ var LibraryStackTrace = {
     if (demangle.recursionGuard > 1) return func;
     var __cxa_demangle_func = Module['___cxa_demangle'] || Module['__cxa_demangle'];
     assert(__cxa_demangle_func);
-    var stackTop = stackSave();
-    try {
-      var s = func;
-      if (s.startsWith('__Z'))
-        s = s.substr(1);
-      var len = lengthBytesUTF8(s)+1;
-      var buf = stackAlloc(len);
-      stringToUTF8(s, buf, len);
-      var status = stackAlloc(4);
-      var ret = __cxa_demangle_func(buf, 0, 0, status);
-      if ({{{ makeGetValue('status', '0', 'i32') }}} === 0 && ret) {
-        return UTF8ToString(ret);
+    withStackSave(function() {
+      try {
+        var s = func;
+        if (s.startsWith('__Z'))
+          s = s.substr(1);
+        var len = lengthBytesUTF8(s)+1;
+        var buf = stackAlloc(len);
+        stringToUTF8(s, buf, len);
+        var status = stackAlloc(4);
+        var ret = __cxa_demangle_func(buf, 0, 0, status);
+        if ({{{ makeGetValue('status', '0', 'i32') }}} === 0 && ret) {
+          return UTF8ToString(ret);
+        }
+        // otherwise, libcxxabi failed
+      } catch(e) {
+      } finally {
+        _free(ret);
+        if (demangle.recursionGuard < 2) --demangle.recursionGuard;
       }
-      // otherwise, libcxxabi failed
-    } catch(e) {
-    } finally {
-      _free(ret);
-      stackRestore(stackTop);
-      if (demangle.recursionGuard < 2) --demangle.recursionGuard;
-    }
+    });
     // failure when using libcxxabi, don't demangle
     return func;
 #else // DEMANGLE_SUPPORT
