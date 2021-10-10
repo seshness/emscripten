@@ -560,7 +560,7 @@ mergeInto(LibraryManager.library, {
       },
       accept: function(listensock) {
         if (!listensock.server) {
-          throw new FS.ErrnoError({{{ cDefine('EINVAL') }}});
+          throw new FS.ErrnoError({{{ cDefine('EAGAIN') }}});
         }
         var newsock = listensock.pending.shift();
         newsock.stream.flags = listensock.stream.flags;

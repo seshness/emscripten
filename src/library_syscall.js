@@ -429,6 +429,10 @@ var SyscallsLibrary = {
         var argp = SYSCALLS.get();
         return FS.ioctl(stream, op, argp);
       }
+      case {{{ cDefine('FIONBIO') }}}: {
+        var argp = SYSCALLS.get();
+        return FS.ioctl(stream, op, argp);
+      }
       case {{{ cDefine('TIOCGWINSZ') }}}: {
         // TODO: in theory we should write to the winsize struct that gets
         // passed in, but for now musl doesn't read anything on it
@@ -516,9 +520,9 @@ var SyscallsLibrary = {
     return -{{{ cDefine('EPERM') }}};
   },
 #if PROXY_POSIX_SOCKETS == 0
-  $getSocketFromFD__deps: ['$SOCKFS', '$FS'],
+  $getSocketFromFD__deps: ['$SOCKFS', '$FS', '$VSOCKFS'],
   $getSocketFromFD: function(fd) {
-    var socket = SOCKFS.getSocket(fd);
+    var socket = VSOCKFS.getSocket(fd);
     if (!socket) throw new FS.ErrnoError({{{ cDefine('EBADF') }}});
 #if SYSCALL_DEBUG
     err('    (socket: "' + socket.path + '")');
@@ -531,15 +535,15 @@ var SyscallsLibrary = {
     if (allowNull && addrp === 0) return null;
     var info = readSockaddr(addrp, addrlen);
     if (info.errno) throw new FS.ErrnoError(info.errno);
-    info.addr = DNS.lookup_addr(info.addr) || info.addr;
+  info.addr = DNS.lookup_addr(info.addr) || info.addr;
 #if SYSCALL_DEBUG
     err('    (socketaddress: "' + [info.addr, info.port] + '")');
 #endif
     return info;
   },
-  __sys_socket__deps: ['$SOCKFS'],
+  __sys_socket__deps: ['$SOCKFS', '$VSOCKFS'],
   __sys_socket: function(domain, type, protocol) {
-    var sock = SOCKFS.createSocket(domain, type, protocol);
+    var sock = VSOCKFS.createSocket(domain, type, protocol);
 #if ASSERTIONS
     assert(sock.stream.fd < 64); // XXX ? select() assumes socket fd values are in 0..63
 #endif
@@ -556,8 +560,14 @@ var SyscallsLibrary = {
 #endif
     return 0;
   },
-  __sys_setsockopt: function(fd) {
-    return -{{{ cDefine('ENOPROTOOPT') }}}; // The option is unknown at the level indicated.
+  // __sys_setsockopt: function(fd) {
+  //   return -{{{ cDefine('ENOPROTOOPT') }}}; // The option is unknown at the level indicated.
+  // },
+  __sys_setsockopt__deps: ['$VSOCKFS'],
+  __sys_setsockopt: function(fd, level, optname, optval, optlen) {
+    // debugger
+    console.log(`setsockopt: fd: ${fd}; level: ${level}; optname: ${optname}; optval: ${optval};`);
+    return 0;
   },
   __sys_getpeername__deps: ['$getSocketFromFD', '$writeSockaddr', '$DNS'],
   __sys_getpeername: function(fd, addr, addrlen) {
@@ -1330,10 +1340,14 @@ var SyscallsLibrary = {
 
   __sys_prlimit64: function(pid, resource, new_limit, old_limit) {
     if (old_limit) { // just report no limits
-      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_cur, '-1', 'i32') }}};  // RLIM_INFINITY
-      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_cur + 4, '-1', 'i32') }}};  // RLIM_INFINITY
-      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_max, '-1', 'i32') }}};  // RLIM_INFINITY
-      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_max + 4, '-1', 'i32') }}};  // RLIM_INFINITY
+      // {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_cur, '-1', 'i32') }}};  // RLIM_INFINITY
+      // {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_cur + 4, '-1', 'i32') }}};  // RLIM_INFINITY
+      // {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_max, '-1', 'i32') }}};  // RLIM_INFINITY
+      // {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_max + 4, '-1', 'i32') }}};  // RLIM_INFINITY
+      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_cur, '12', 'i32') }}};  // RLIM_INFINITY
+      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_cur + 4, '0', 'i32') }}};  // RLIM_INFINITY
+      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_max, '100', 'i32') }}};  // RLIM_INFINITY
+      {{{ makeSetValue('old_limit', C_STRUCTS.rlimit.rlim_max + 4, '0', 'i32') }}};  // RLIM_INFINITY
     }
     return 0;
   },
@@ -1486,7 +1500,7 @@ function unimplementedSycall(name) {
   '__sys_getitimer',
   '__sys_shutdown',
   '__sys_socketpair',
-  '__sys_setsockopt',
+  // '__sys_setsockopt',
   '__sys_ugetrlimit',
   '__sys_wait4',
   '__sys_pause',

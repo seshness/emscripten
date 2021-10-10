@@ -100,7 +100,8 @@ var LibraryManager = {
         'library_memfs.js',
         'library_tty.js',
         'library_pipefs.js', // ok to include it by default since it's only used if the syscall is used
-        'library_sockfs.js', // ok to include it by default since it's only used if the syscall is used
+        // 'library_sockfs.js', // ok to include it by default since it's only used if the syscall is used
+        'library_vsockfs.js',
       ]);
 
       if (NODERAWFS) {
