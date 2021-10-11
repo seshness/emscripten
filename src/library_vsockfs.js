@@ -2,7 +2,7 @@ mergeInto(LibraryManager.library, {
   $VSOCKFS__postset: function() {
     addAtInit('VSOCKFS.root = FS.mount(VSOCKFS, {}, null);');
   },
-  $VSOCKFS__deps: ['$FS', '$Asyncify'],
+  $VSOCKFS__deps: ['$FS'],
   $VSOCKFS: {
     mount: function(mount) {
       globalThis.vSockFsEventBus = new EventTarget();

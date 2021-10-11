@@ -520,7 +520,7 @@ var SyscallsLibrary = {
     return -{{{ cDefine('EPERM') }}};
   },
 #if PROXY_POSIX_SOCKETS == 0
-  $getSocketFromFD__deps: ['$SOCKFS', '$FS', '$VSOCKFS'],
+  $getSocketFromFD__deps: ['$FS', '$VSOCKFS'],
   $getSocketFromFD: function(fd) {
     var socket = VSOCKFS.getSocket(fd);
     if (!socket) throw new FS.ErrnoError({{{ cDefine('EBADF') }}});
