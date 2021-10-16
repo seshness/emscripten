@@ -541,7 +541,7 @@ var SyscallsLibrary = {
 #endif
     return info;
   },
-  __sys_socket__deps: ['$SOCKFS', '$VSOCKFS'],
+  __sys_socket__deps: ['$VSOCKFS'],
   __sys_socket: function(domain, type, protocol) {
     var sock = VSOCKFS.createSocket(domain, type, protocol);
 #if ASSERTIONS
